@@ -1,13 +1,22 @@
 import { useState, useEffect, useContext } from 'react'
 import { ThemeContext } from '../App'
+import { useAuth } from '../contexts/AuthContext'
+import {
+  getDopamineCategories,
+  createDopamineCategory,
+  updateDopamineCategory,
+  deleteDopamineCategory,
+  getDopamineEntries,
+  upsertDopamineEntry,
+  deleteDopamineEntry
+} from '../lib/database'
 import './Dopamine.css'
 
 function Dopamine() {
   const { theme } = useContext(ThemeContext)
-  const [categories, setCategories] = useState(() => {
-    const saved = localStorage.getItem('dopamineCategories')
-    return saved ? JSON.parse(saved) : {}
-  })
+  const { user } = useAuth()
+  const [categories, setCategories] = useState({})
+  const [loading, setLoading] = useState(true)
   const [activeCategory, setActiveCategory] = useState(null)
   const [currentDate, setCurrentDate] = useState(new Date())
   const [todayDate, setTodayDate] = useState(new Date())
@@ -53,9 +62,45 @@ function Dopamine() {
     return () => clearTimeout(midnightTimeout)
   }, [todayDate])
 
+  // Load categories and entries from Supabase
   useEffect(() => {
-    localStorage.setItem('dopamineCategories', JSON.stringify(categories))
-  }, [categories])
+    async function loadData() {
+      if (!user) return
+
+      try {
+        setLoading(true)
+        const categoriesData = await getDopamineCategories()
+
+        // Transform to match existing structure
+        const categoriesObj = {}
+        for (const cat of categoriesData) {
+          const entries = await getDopamineEntries(cat.id)
+          const entriesObj = {}
+          entries.forEach(entry => {
+            entriesObj[entry.date] = entry.value
+          })
+
+          categoriesObj[cat.id] = {
+            name: cat.name,
+            type: cat.type,
+            unit: cat.unit,
+            color: cat.color,
+            goalType: cat.goal_type,
+            goalValue: cat.goal_value,
+            entries: entriesObj
+          }
+        }
+
+        setCategories(categoriesObj)
+        setLoading(false)
+      } catch (error) {
+        console.error('Error loading dopamine data:', error)
+        setLoading(false)
+      }
+    }
+
+    loadData()
+  }, [user])
 
   useEffect(() => {
     const categoryIds = Object.keys(categories)
@@ -147,7 +192,7 @@ function Dopamine() {
     setEditingCategory(null)
   }
 
-  const saveCategory = () => {
+  const saveCategory = async () => {
     if (!categoryForm.name.trim()) {
       alert('Please enter a category name')
       return
@@ -158,42 +203,59 @@ function Dopamine() {
       return
     }
 
-    const categoryData = {
-      name: categoryForm.name.trim(),
-      type: categoryForm.type,
-      unit: categoryForm.unit,
-      color: categoryForm.color,
-      goalType: categoryForm.goalType,
-      goalValue: categoryForm.goalType === 'limit' ? parseFloat(categoryForm.goalValue) : 0,
-      entries: editingCategory ? categories[editingCategory].entries : {}
-    }
+    try {
+      const categoryData = {
+        name: categoryForm.name.trim(),
+        type: categoryForm.type,
+        unit: categoryForm.unit,
+        color: categoryForm.color,
+        goalType: categoryForm.goalType,
+        goalValue: categoryForm.goalType === 'limit' ? parseFloat(categoryForm.goalValue) : 0
+      }
 
-    if (editingCategory) {
-      setCategories(prev => ({
-        ...prev,
-        [editingCategory]: categoryData
-      }))
-    } else {
-      const newId = `cat-${Date.now()}`
-      setCategories(prev => ({
-        ...prev,
-        [newId]: categoryData
-      }))
-      setActiveCategory(newId)
-    }
+      if (editingCategory) {
+        await updateDopamineCategory(editingCategory, categoryData)
+        setCategories(prev => ({
+          ...prev,
+          [editingCategory]: {
+            ...categoryData,
+            entries: prev[editingCategory].entries
+          }
+        }))
+      } else {
+        const newCategory = await createDopamineCategory(categoryData)
+        setCategories(prev => ({
+          ...prev,
+          [newCategory.id]: {
+            ...categoryData,
+            entries: {}
+          }
+        }))
+        setActiveCategory(newCategory.id)
+      }
 
-    closeCategoryModal()
+      closeCategoryModal()
+    } catch (error) {
+      console.error('Error saving category:', error)
+      alert('Failed to save category')
+    }
   }
 
-  const deleteCategory = (catId) => {
+  const deleteCategory = async (catId) => {
     if (window.confirm(`Delete category "${categories[catId].name}"?`)) {
-      const newCategories = { ...categories }
-      delete newCategories[catId]
-      setCategories(newCategories)
+      try {
+        await deleteDopamineCategory(catId)
+        const newCategories = { ...categories }
+        delete newCategories[catId]
+        setCategories(newCategories)
 
-      if (activeCategory === catId) {
-        const remaining = Object.keys(newCategories)
-        setActiveCategory(remaining.length > 0 ? remaining[0] : null)
+        if (activeCategory === catId) {
+          const remaining = Object.keys(newCategories)
+          setActiveCategory(remaining.length > 0 ? remaining[0] : null)
+        }
+      } catch (error) {
+        console.error('Error deleting category:', error)
+        alert('Failed to delete category')
       }
     }
   }
@@ -223,7 +285,7 @@ function Dopamine() {
     setDurationMinutes('')
   }
 
-  const saveEntry = () => {
+  const saveEntry = async () => {
     if (!activeCategory) return
 
     const cat = categories[activeCategory]
@@ -237,35 +299,46 @@ function Dopamine() {
       value = parseFloat(entryValue) || 0
     }
 
-    setCategories(prev => ({
-      ...prev,
-      [activeCategory]: {
-        ...prev[activeCategory],
-        entries: {
-          ...prev[activeCategory].entries,
-          [selectedDate]: value
+    try {
+      await upsertDopamineEntry(activeCategory, selectedDate, value)
+      setCategories(prev => ({
+        ...prev,
+        [activeCategory]: {
+          ...prev[activeCategory],
+          entries: {
+            ...prev[activeCategory].entries,
+            [selectedDate]: value
+          }
         }
-      }
-    }))
-
-    closeEntryModal()
+      }))
+      closeEntryModal()
+    } catch (error) {
+      console.error('Error saving entry:', error)
+      alert('Failed to save entry')
+    }
   }
 
-  const deleteEntry = () => {
+  const deleteEntry = async () => {
     if (!activeCategory) return
 
-    const newEntries = { ...categories[activeCategory].entries }
-    delete newEntries[selectedDate]
+    try {
+      await deleteDopamineEntry(activeCategory, selectedDate)
+      const newEntries = { ...categories[activeCategory].entries }
+      delete newEntries[selectedDate]
 
-    setCategories(prev => ({
-      ...prev,
-      [activeCategory]: {
-        ...prev[activeCategory],
-        entries: newEntries
-      }
-    }))
+      setCategories(prev => ({
+        ...prev,
+        [activeCategory]: {
+          ...prev[activeCategory],
+          entries: newEntries
+        }
+      }))
 
-    closeEntryModal()
+      closeEntryModal()
+    } catch (error) {
+      console.error('Error deleting entry:', error)
+      alert('Failed to delete entry')
+    }
   }
 
   const getHeatMapIntensity = (dateString) => {
@@ -707,6 +780,14 @@ function Dopamine() {
   const monthlyAvg = getMonthlyAverage()
   const monthlyTotal = getMonthlyTotal()
   const comparison = getLastMonthComparison()
+
+  if (loading) {
+    return (
+      <div className="dopamine-page" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '60vh' }}>
+        <div style={{ color: theme.text, fontSize: '24px' }}>Loading...</div>
+      </div>
+    )
+  }
 
   return (
     <div className="dopamine-page">

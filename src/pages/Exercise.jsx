@@ -1,48 +1,88 @@
 import { useState, useEffect, useContext } from 'react'
 import { ThemeContext } from '../App'
+import { useAuth } from '../contexts/AuthContext'
+import {
+  getExerciseDays,
+  upsertExerciseDay,
+  deleteExerciseDay,
+  getExerciseNotes,
+  upsertExerciseNote,
+  getUserSettings,
+  updateUserSettings
+} from '../lib/database'
 import Calendar from '../components/CalendarNew'
 import ProgressBar from '../components/ProgressBar'
 import './Exercise.css'
 
 function Exercise() {
   const { theme } = useContext(ThemeContext)
-  const [exerciseDays, setExerciseDays] = useState(() => {
-    const saved = localStorage.getItem('exerciseDays')
-    return saved ? JSON.parse(saved) : {}
-  })
-  const [dayNotes, setDayNotes] = useState(() => {
-    const saved = localStorage.getItem('dayNotes')
-    return saved ? JSON.parse(saved) : {}
-  })
-  const [monthlyGoal, setMonthlyGoal] = useState(() => {
-    const saved = localStorage.getItem('monthlyGoal')
-    return saved ? parseInt(saved) : 20
-  })
+  const { user } = useAuth()
+  const [exerciseDays, setExerciseDays] = useState({})
+  const [dayNotes, setDayNotes] = useState({})
+  const [monthlyGoal, setMonthlyGoal] = useState(20)
+  const [loading, setLoading] = useState(true)
   const [currentDate, setCurrentDate] = useState(new Date())
   const [focusedMonth, setFocusedMonth] = useState(null) // null = year view, number = specific month
 
+  // Load data from Supabase
   useEffect(() => {
-    localStorage.setItem('exerciseDays', JSON.stringify(exerciseDays))
-  }, [exerciseDays])
+    async function loadData() {
+      if (!user) return
 
-  useEffect(() => {
-    localStorage.setItem('dayNotes', JSON.stringify(dayNotes))
-  }, [dayNotes])
+      try {
+        setLoading(true)
+        const [days, notes, settings] = await Promise.all([
+          getExerciseDays(),
+          getExerciseNotes(),
+          getUserSettings()
+        ])
 
-  useEffect(() => {
-    localStorage.setItem('monthlyGoal', monthlyGoal.toString())
-  }, [monthlyGoal])
+        // Transform to object format
+        const daysObj = {}
+        days.forEach(day => {
+          daysObj[day.date] = day.completed
+        })
 
-  const toggleExerciseDay = (dateString) => {
-    setExerciseDays(prev => {
-      const newDays = { ...prev }
-      if (newDays[dateString]) {
-        delete newDays[dateString]
-      } else {
-        newDays[dateString] = true
+        const notesObj = {}
+        notes.forEach(note => {
+          notesObj[note.date] = note.note
+        })
+
+        setExerciseDays(daysObj)
+        setDayNotes(notesObj)
+        if (settings?.exercise_monthly_goal) {
+          setMonthlyGoal(settings.exercise_monthly_goal)
+        }
+        setLoading(false)
+      } catch (error) {
+        console.error('Error loading exercise data:', error)
+        setLoading(false)
       }
-      return newDays
-    })
+    }
+
+    loadData()
+  }, [user])
+
+  const toggleExerciseDay = async (dateString) => {
+    try {
+      if (exerciseDays[dateString]) {
+        await deleteExerciseDay(dateString)
+        setExerciseDays(prev => {
+          const newDays = { ...prev }
+          delete newDays[dateString]
+          return newDays
+        })
+      } else {
+        await upsertExerciseDay(dateString, true)
+        setExerciseDays(prev => ({
+          ...prev,
+          [dateString]: true
+        }))
+      }
+    } catch (error) {
+      console.error('Error toggling exercise day:', error)
+      alert('Failed to update exercise day')
+    }
   }
 
   const getMonthProgress = (year, month) => {
@@ -67,20 +107,44 @@ function Exercise() {
   // Use focused month for progress bar, or current month if in year view
   const displayMonth = focusedMonth !== null ? focusedMonth : new Date().getMonth()
 
-  const setDayNote = (dateString, note) => {
-    setDayNotes(prev => {
-      const newNotes = { ...prev }
-      if (note && note.trim()) {
-        newNotes[dateString] = note.trim()
-      } else {
-        delete newNotes[dateString]
-      }
-      return newNotes
-    })
+  const setDayNote = async (dateString, note) => {
+    try {
+      await upsertExerciseNote(dateString, note)
+      setDayNotes(prev => {
+        const newNotes = { ...prev }
+        if (note && note.trim()) {
+          newNotes[dateString] = note.trim()
+        } else {
+          delete newNotes[dateString]
+        }
+        return newNotes
+      })
+    } catch (error) {
+      console.error('Error saving note:', error)
+      alert('Failed to save note')
+    }
   }
 
   const getDayNote = (dateString) => {
     return dayNotes[dateString] || ''
+  }
+
+  const handleSetGoal = async (newGoal) => {
+    try {
+      await updateUserSettings({ exercise_monthly_goal: newGoal })
+      setMonthlyGoal(newGoal)
+    } catch (error) {
+      console.error('Error updating goal:', error)
+      alert('Failed to update goal')
+    }
+  }
+
+  if (loading) {
+    return (
+      <div className="exercise-page" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '60vh' }}>
+        <div style={{ color: theme.text, fontSize: '24px' }}>Loading...</div>
+      </div>
+    )
   }
 
   return (
@@ -102,7 +166,7 @@ function Exercise() {
         progress={getMonthProgress(currentDate.getFullYear(), displayMonth)}
         count={getMonthCount(currentDate.getFullYear(), displayMonth)}
         goal={monthlyGoal}
-        setGoal={setMonthlyGoal}
+        setGoal={handleSetGoal}
       />
     </div>
   )

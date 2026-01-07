@@ -1,11 +1,13 @@
 import { useState, useEffect, createContext } from 'react'
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom'
 import Navbar from './components/Navbar'
+import ProtectedRoute from './components/ProtectedRoute'
 import Home from './pages/Home'
 import Money from './pages/Money'
 import Exercise from './pages/Exercise'
 import Dopamine from './pages/Dopamine'
 import Settings from './pages/Settings'
+import Login from './pages/Login'
 import AnimatedSprite from './components/AnimatedSprite'
 import './App.css'
 
@@ -114,11 +116,12 @@ function App() {
           <Navbar />
           <div className="content">
             <Routes>
-              <Route path="/" element={<Home />} />
-              <Route path="/money" element={<Money />} />
-              <Route path="/exercise" element={<Exercise />} />
-              <Route path="/dopamine" element={<Dopamine />} />
-              <Route path="/settings" element={<Settings />} />
+              <Route path="/login" element={<Login />} />
+              <Route path="/" element={<ProtectedRoute><Home /></ProtectedRoute>} />
+              <Route path="/money" element={<ProtectedRoute><Money /></ProtectedRoute>} />
+              <Route path="/exercise" element={<ProtectedRoute><Exercise /></ProtectedRoute>} />
+              <Route path="/dopamine" element={<ProtectedRoute><Dopamine /></ProtectedRoute>} />
+              <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
             </Routes>
           </div>
         </div>

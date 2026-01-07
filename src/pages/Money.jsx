@@ -1,17 +1,23 @@
 import { useState, useEffect, useContext } from 'react'
 import { ThemeContext } from '../App'
+import { useAuth } from '../contexts/AuthContext'
+import {
+  getTransactions,
+  createTransaction,
+  updateTransaction,
+  deleteTransaction as dbDeleteTransaction,
+  getRecurringTransactions,
+  createRecurringTransaction,
+  deleteRecurringTransaction
+} from '../lib/database'
 import './Money.css'
 
 function Money() {
   const { theme } = useContext(ThemeContext)
-  const [transactions, setTransactions] = useState(() => {
-    const saved = localStorage.getItem('transactions')
-    return saved ? JSON.parse(saved) : []
-  })
-  const [recurringTransactions, setRecurringTransactions] = useState(() => {
-    const saved = localStorage.getItem('recurringTransactions')
-    return saved ? JSON.parse(saved) : []
-  })
+  const { user } = useAuth()
+  const [transactions, setTransactions] = useState([])
+  const [recurringTransactions, setRecurringTransactions] = useState([])
+  const [loading, setLoading] = useState(true)
   const [currentDate, setCurrentDate] = useState(new Date())
   const [todayDate, setTodayDate] = useState(new Date())
   const [viewMode, setViewMode] = useState('month') // 'month' or 'year'
@@ -73,34 +79,65 @@ function Money() {
     Other: '#CCCCCC'
   }
 
+  // Load data from Supabase
   useEffect(() => {
-    localStorage.setItem('transactions', JSON.stringify(transactions))
-  }, [transactions])
+    async function loadData() {
+      if (!user) return
 
-  useEffect(() => {
-    localStorage.setItem('recurringTransactions', JSON.stringify(recurringTransactions))
-  }, [recurringTransactions])
+      try {
+        setLoading(true)
+        const [transactionsData, recurringData] = await Promise.all([
+          getTransactions(),
+          getRecurringTransactions()
+        ])
+
+        setTransactions(transactionsData)
+        setRecurringTransactions(recurringData)
+        setLoading(false)
+      } catch (error) {
+        console.error('Error loading money data:', error)
+        setLoading(false)
+      }
+    }
+
+    loadData()
+  }, [user])
 
   // Apply recurring transactions for the current month
   useEffect(() => {
-    recurringTransactions.forEach(recurring => {
-      const dateString = `${year}-${String(month + 1).padStart(2, '0')}-${String(recurring.recurringDay).padStart(2, '0')}`
-      const exists = transactions.some(t =>
-        t.date === dateString &&
-        t.category === recurring.category &&
-        t.type === recurring.type &&
-        t.isRecurring
-      )
-      if (!exists) {
-        const newTransaction = {
-          ...recurring,
-          date: dateString,
-          id: Date.now() + Math.random()
+    if (loading || !user) return
+
+    async function applyRecurring() {
+      for (const recurring of recurringTransactions) {
+        const dateString = `${year}-${String(month + 1).padStart(2, '0')}-${String(recurring.recurring_day).padStart(2, '0')}`
+        const exists = transactions.some(t =>
+          t.date === dateString &&
+          t.category === recurring.category &&
+          t.type === recurring.type &&
+          t.is_recurring
+        )
+        if (!exists) {
+          try {
+            const newTransaction = await createTransaction({
+              type: recurring.type,
+              category: recurring.category,
+              amount: recurring.amount,
+              currency: recurring.currency,
+              note: recurring.note,
+              date: dateString,
+              isRecurring: true,
+              recurringDay: recurring.recurring_day
+            })
+            setTransactions(prev => [...prev, newTransaction])
+          } catch (error) {
+            console.error('Error creating recurring transaction:', error)
+          }
         }
-        setTransactions(prev => [...prev, newTransaction])
       }
-    })
-  }, [year, month, recurringTransactions])
+    }
+
+    applyRecurring()
+  }, [year, month, recurringTransactions, transactions, loading, user])
 
   const getDaysInMonth = (m) => {
     return new Date(year, m + 1, 0).getDate()
@@ -188,47 +225,76 @@ function Money() {
     setEditingTransaction(null)
   }
 
-  const saveTransaction = () => {
+  const saveTransaction = async () => {
     if (!modalData.amount || parseFloat(modalData.amount) <= 0) {
       alert('Please enter a valid amount')
       return
     }
 
-    const transaction = {
-      id: editingTransaction ? editingTransaction.id : Date.now(),
-      type: modalData.type,
-      category: modalData.category,
-      amount: parseFloat(modalData.amount),
-      currency: modalData.currency,
-      note: modalData.note,
-      date: modalData.date,
-      isRecurring: modalData.isRecurring,
-      recurringDay: modalData.isRecurring ? parseInt(modalData.recurringDay) : null
-    }
-
-    if (editingTransaction) {
-      setTransactions(prev => prev.map(t => t.id === editingTransaction.id ? transaction : t))
-      if (transaction.isRecurring) {
-        setRecurringTransactions(prev => {
-          const filtered = prev.filter(r =>
-            !(r.category === editingTransaction.category && r.type === editingTransaction.type)
-          )
-          return [...filtered, transaction]
-        })
+    try {
+      const transactionData = {
+        type: modalData.type,
+        category: modalData.category,
+        amount: parseFloat(modalData.amount),
+        currency: modalData.currency,
+        note: modalData.note,
+        date: modalData.date,
+        isRecurring: modalData.isRecurring,
+        recurringDay: modalData.isRecurring ? parseInt(modalData.recurringDay) : null
       }
-    } else {
-      setTransactions(prev => [...prev, transaction])
-      if (transaction.isRecurring) {
-        setRecurringTransactions(prev => [...prev, transaction])
-      }
-    }
 
-    closeModal()
+      if (editingTransaction) {
+        const updated = await updateTransaction(editingTransaction.id, transactionData)
+        setTransactions(prev => prev.map(t => t.id === editingTransaction.id ? updated : t))
+
+        if (updated.is_recurring) {
+          const recurringData = {
+            type: updated.type,
+            category: updated.category,
+            amount: updated.amount,
+            currency: updated.currency,
+            note: updated.note,
+            recurringDay: updated.recurring_day
+          }
+          await createRecurringTransaction(recurringData)
+          const recurringList = await getRecurringTransactions()
+          setRecurringTransactions(recurringList)
+        }
+      } else {
+        const created = await createTransaction(transactionData)
+        setTransactions(prev => [...prev, created])
+
+        if (created.is_recurring) {
+          const recurringData = {
+            type: created.type,
+            category: created.category,
+            amount: created.amount,
+            currency: created.currency,
+            note: created.note,
+            recurringDay: created.recurring_day
+          }
+          await createRecurringTransaction(recurringData)
+          const recurringList = await getRecurringTransactions()
+          setRecurringTransactions(recurringList)
+        }
+      }
+
+      closeModal()
+    } catch (error) {
+      console.error('Error saving transaction:', error)
+      alert('Failed to save transaction')
+    }
   }
 
-  const deleteTransaction = (id) => {
+  const deleteTransaction = async (id) => {
     if (window.confirm('Delete this transaction?')) {
-      setTransactions(prev => prev.filter(t => t.id !== id))
+      try {
+        await dbDeleteTransaction(id)
+        setTransactions(prev => prev.filter(t => t.id !== id))
+      } catch (error) {
+        console.error('Error deleting transaction:', error)
+        alert('Failed to delete transaction')
+      }
     }
   }
 
@@ -493,6 +559,14 @@ function Money() {
   }
 
   const { totalIncome, totalExpense, net } = calculateNetIncome()
+
+  if (loading) {
+    return (
+      <div className="money-page" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '60vh' }}>
+        <div style={{ color: theme.text, fontSize: '24px' }}>Loading...</div>
+      </div>
+    )
+  }
 
   return (
     <div className="money-page">

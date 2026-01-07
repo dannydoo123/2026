@@ -1,0 +1,331 @@
+import { supabase } from '../supabaseClient'
+
+// ============================================
+// DOPAMINE FUNCTIONS
+// ============================================
+
+export async function getDopamineCategories() {
+  const { data, error } = await supabase
+    .from('dopamine_categories')
+    .select('*')
+    .order('created_at', { ascending: true })
+
+  if (error) throw error
+  return data || []
+}
+
+export async function createDopamineCategory(category) {
+  const { data: { user } } = await supabase.auth.getUser()
+
+  const { data, error } = await supabase
+    .from('dopamine_categories')
+    .insert([{
+      user_id: user.id,
+      name: category.name,
+      type: category.type,
+      unit: category.unit,
+      color: category.color,
+      goal_type: category.goalType,
+      goal_value: category.goalValue
+    }])
+    .select()
+    .single()
+
+  if (error) throw error
+  return data
+}
+
+export async function updateDopamineCategory(categoryId, updates) {
+  const { data, error } = await supabase
+    .from('dopamine_categories')
+    .update({
+      name: updates.name,
+      type: updates.type,
+      unit: updates.unit,
+      color: updates.color,
+      goal_type: updates.goalType,
+      goal_value: updates.goalValue
+    })
+    .eq('id', categoryId)
+    .select()
+    .single()
+
+  if (error) throw error
+  return data
+}
+
+export async function deleteDopamineCategory(categoryId) {
+  const { error } = await supabase
+    .from('dopamine_categories')
+    .delete()
+    .eq('id', categoryId)
+
+  if (error) throw error
+}
+
+export async function getDopamineEntries(categoryId) {
+  const { data, error } = await supabase
+    .from('dopamine_entries')
+    .select('*')
+    .eq('category_id', categoryId)
+
+  if (error) throw error
+  return data || []
+}
+
+export async function upsertDopamineEntry(categoryId, date, value) {
+  const { data: { user } } = await supabase.auth.getUser()
+
+  const { data, error } = await supabase
+    .from('dopamine_entries')
+    .upsert({
+      user_id: user.id,
+      category_id: categoryId,
+      date,
+      value
+    }, {
+      onConflict: 'user_id,category_id,date'
+    })
+    .select()
+    .single()
+
+  if (error) throw error
+  return data
+}
+
+export async function deleteDopamineEntry(categoryId, date) {
+  const { data: { user } } = await supabase.auth.getUser()
+
+  const { error } = await supabase
+    .from('dopamine_entries')
+    .delete()
+    .eq('category_id', categoryId)
+    .eq('date', date)
+    .eq('user_id', user.id)
+
+  if (error) throw error
+}
+
+// ============================================
+// MONEY/TRANSACTION FUNCTIONS
+// ============================================
+
+export async function getTransactions() {
+  const { data, error } = await supabase
+    .from('transactions')
+    .select('*')
+    .order('date', { ascending: false })
+
+  if (error) throw error
+  return data || []
+}
+
+export async function createTransaction(transaction) {
+  const { data: { user } } = await supabase.auth.getUser()
+
+  const { data, error } = await supabase
+    .from('transactions')
+    .insert([{
+      user_id: user.id,
+      type: transaction.type,
+      category: transaction.category,
+      amount: transaction.amount,
+      currency: transaction.currency,
+      note: transaction.note,
+      date: transaction.date,
+      is_recurring: transaction.isRecurring,
+      recurring_day: transaction.recurringDay
+    }])
+    .select()
+    .single()
+
+  if (error) throw error
+  return data
+}
+
+export async function updateTransaction(transactionId, updates) {
+  const { data, error } = await supabase
+    .from('transactions')
+    .update({
+      type: updates.type,
+      category: updates.category,
+      amount: updates.amount,
+      currency: updates.currency,
+      note: updates.note,
+      date: updates.date,
+      is_recurring: updates.isRecurring,
+      recurring_day: updates.recurringDay
+    })
+    .eq('id', transactionId)
+    .select()
+    .single()
+
+  if (error) throw error
+  return data
+}
+
+export async function deleteTransaction(transactionId) {
+  const { error } = await supabase
+    .from('transactions')
+    .delete()
+    .eq('id', transactionId)
+
+  if (error) throw error
+}
+
+export async function getRecurringTransactions() {
+  const { data, error } = await supabase
+    .from('recurring_transactions')
+    .select('*')
+
+  if (error) throw error
+  return data || []
+}
+
+export async function createRecurringTransaction(transaction) {
+  const { data: { user } } = await supabase.auth.getUser()
+
+  const { data, error } = await supabase
+    .from('recurring_transactions')
+    .insert([{
+      user_id: user.id,
+      type: transaction.type,
+      category: transaction.category,
+      amount: transaction.amount,
+      currency: transaction.currency,
+      note: transaction.note,
+      recurring_day: transaction.recurringDay
+    }])
+    .select()
+    .single()
+
+  if (error) throw error
+  return data
+}
+
+export async function deleteRecurringTransaction(id) {
+  const { error } = await supabase
+    .from('recurring_transactions')
+    .delete()
+    .eq('id', id)
+
+  if (error) throw error
+}
+
+// ============================================
+// EXERCISE FUNCTIONS
+// ============================================
+
+export async function getExerciseDays() {
+  const { data, error } = await supabase
+    .from('exercise_days')
+    .select('*')
+    .order('date', { ascending: false })
+
+  if (error) throw error
+  return data || []
+}
+
+export async function upsertExerciseDay(date, completed = true) {
+  const { data: { user } } = await supabase.auth.getUser()
+
+  const { data, error } = await supabase
+    .from('exercise_days')
+    .upsert({
+      user_id: user.id,
+      date,
+      completed
+    }, {
+      onConflict: 'user_id,date'
+    })
+    .select()
+    .single()
+
+  if (error) throw error
+  return data
+}
+
+export async function deleteExerciseDay(date) {
+  const { data: { user } } = await supabase.auth.getUser()
+
+  const { error } = await supabase
+    .from('exercise_days')
+    .delete()
+    .eq('date', date)
+    .eq('user_id', user.id)
+
+  if (error) throw error
+}
+
+export async function getExerciseNotes() {
+  const { data, error } = await supabase
+    .from('exercise_notes')
+    .select('*')
+
+  if (error) throw error
+  return data || []
+}
+
+export async function upsertExerciseNote(date, note) {
+  const { data: { user } } = await supabase.auth.getUser()
+
+  if (!note || !note.trim()) {
+    // Delete if note is empty
+    const { error } = await supabase
+      .from('exercise_notes')
+      .delete()
+      .eq('date', date)
+      .eq('user_id', user.id)
+
+    if (error) throw error
+    return null
+  }
+
+  const { data, error } = await supabase
+    .from('exercise_notes')
+    .upsert({
+      user_id: user.id,
+      date,
+      note: note.trim()
+    }, {
+      onConflict: 'user_id,date'
+    })
+    .select()
+    .single()
+
+  if (error) throw error
+  return data
+}
+
+// ============================================
+// USER SETTINGS FUNCTIONS
+// ============================================
+
+export async function getUserSettings() {
+  const { data: { user } } = await supabase.auth.getUser()
+
+  const { data, error } = await supabase
+    .from('user_settings')
+    .select('*')
+    .eq('user_id', user.id)
+    .single()
+
+  if (error && error.code !== 'PGRST116') throw error // PGRST116 = no rows returned
+  return data
+}
+
+export async function updateUserSettings(settings) {
+  const { data: { user } } = await supabase.auth.getUser()
+
+  const { data, error } = await supabase
+    .from('user_settings')
+    .upsert({
+      user_id: user.id,
+      ...settings
+    })
+    .select()
+    .single()
+
+  if (error) throw error
+  return data
+}
