@@ -1,0 +1,20 @@
+.animated-sprite {
+  position: fixed;
+  width: 96px;
+  height: 96px;
+  background-repeat: no-repeat;
+  background-size: 768px 192px; /* 8×96 by 2×96 (1.5x scale) */
+  animation: walk 1s steps(8) infinite;
+  pointer-events: none;
+  z-index: 10;
+  image-rendering: pixelated;
+}
+
+@keyframes walk {
+  from {
+    background-position: 0px -96px;
+  }
+  to {
+    background-position: -768px -96px;
+  }
+}

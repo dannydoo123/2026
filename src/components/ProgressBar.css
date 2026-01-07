@@ -1,0 +1,238 @@
+.progress-container {
+  max-width: 800px;
+  margin: 10px auto 0;
+  padding: 8px 10px;
+  border-radius: 16px;
+}
+
+.progress-header {
+  margin-bottom: 6px;
+}
+
+.goal-display {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 1.4rem;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.goal-label {
+  font-weight: bold;
+}
+
+.goal-value {
+  font-size: 1.5rem;
+  font-weight: bold;
+}
+
+.goal-edit {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.goal-input {
+  width: 70px;
+  padding: 6px 10px;
+  font-size: 1.3rem;
+  font-family: inherit;
+  border-radius: 8px;
+  text-align: center;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.goal-button {
+  padding: 6px 16px;
+  font-size: 1.2rem;
+  font-family: inherit;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+  border: none;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.goal-button:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+.goal-button.edit {
+  padding: 4px 12px;
+  font-size: 1.1rem;
+}
+
+.progress-info {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 6px;
+  font-size: 1.2rem;
+}
+
+.progress-count {
+  font-weight: bold;
+}
+
+.progress-percentage {
+  font-weight: bold;
+}
+
+.over-progress {
+  color: #4caf50;
+  font-weight: bold;
+}
+
+.progress-bar-wrapper {
+  position: relative;
+}
+
+.progress-bar-container {
+  height: 24px;
+  border-radius: 12px;
+  overflow: hidden;
+  position: relative;
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.1);
+  transition: box-shadow 0.3s ease;
+}
+
+.progress-bar-container.glowing {
+  box-shadow:
+    inset 0 2px 4px rgba(0, 0, 0, 0.1),
+    0 0 20px rgba(76, 175, 80, 0.4),
+    0 0 40px rgba(76, 175, 80, 0.2);
+  animation: glow-pulse 2s ease-in-out infinite;
+}
+
+.progress-bar-fill {
+  height: 100%;
+  transition: width 0.5s ease, background-color 0.3s ease;
+  border-radius: 15px;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  overflow: hidden;
+}
+
+/* Wave animation */
+.wave {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 200%;
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.3),
+    transparent
+  );
+  animation: wave-flow 3s linear infinite;
+}
+
+.wave-2 {
+  animation-delay: 1.5s;
+  opacity: 0.5;
+}
+
+.progress-bar-overflow {
+  height: 100%;
+  position: absolute;
+  right: 0;
+  top: 0;
+  border-radius: 15px;
+  animation: pulse 2s ease-in-out infinite;
+}
+
+.achievement-message {
+  text-align: center;
+  font-size: 1.3rem;
+  font-weight: bold;
+  margin-top: 6px;
+  animation: bounce 1s ease infinite;
+}
+
+/* Particle burst */
+.particle {
+  position: absolute;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  top: 50%;
+  left: 50%;
+  pointer-events: none;
+  animation: particle-burst 1s ease-out forwards;
+  transform-origin: center;
+}
+
+@keyframes particle-burst {
+  0% {
+    opacity: 1;
+    transform: translate(-50%, -50%) rotate(var(--angle)) translateY(0) scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -50%) rotate(var(--angle)) translateY(-80px) scale(0);
+  }
+}
+
+@keyframes wave-flow {
+  0% {
+    transform: translateX(-50%);
+  }
+  100% {
+    transform: translateX(0%);
+  }
+}
+
+@keyframes glow-pulse {
+  0%, 100% {
+    box-shadow:
+      inset 0 2px 4px rgba(0, 0, 0, 0.1),
+      0 0 20px rgba(76, 175, 80, 0.4),
+      0 0 40px rgba(76, 175, 80, 0.2);
+  }
+  50% {
+    box-shadow:
+      inset 0 2px 4px rgba(0, 0, 0, 0.1),
+      0 0 30px rgba(76, 175, 80, 0.6),
+      0 0 60px rgba(76, 175, 80, 0.3);
+  }
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.7;
+  }
+}
+
+@keyframes bounce {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+@media (max-width: 600px) {
+  .progress-container {
+    padding: 20px 10px;
+  }
+
+  .goal-display {
+    font-size: 1.5rem;
+  }
+
+  .progress-info {
+    font-size: 1.4rem;
+  }
+}

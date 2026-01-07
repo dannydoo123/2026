@@ -1,0 +1,116 @@
+.settings-page {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 20px;
+}
+
+.settings-page h1 {
+  font-size: 3rem;
+  text-align: center;
+  margin-bottom: 30px;
+}
+
+.settings-container {
+  border-radius: 16px;
+  padding: 40px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+}
+
+.settings-section {
+  margin-bottom: 30px;
+}
+
+.settings-section:last-child {
+  margin-bottom: 0;
+}
+
+.settings-section h2 {
+  font-size: 2.2rem;
+  margin-bottom: 20px;
+}
+
+.theme-options {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.theme-option-button {
+  padding: 16px 24px;
+  font-size: 1.6rem;
+  font-family: inherit;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  text-align: left;
+}
+
+.theme-option-button:hover {
+  transform: translateX(8px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.theme-option-button.selected {
+  font-weight: bold;
+  transform: scale(1.02);
+}
+
+.settings-divider {
+  height: 2px;
+  margin: 40px 0;
+  opacity: 0.2;
+  border-radius: 2px;
+}
+
+.font-selector {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.font-dropdown {
+  padding: 16px;
+  font-size: 1.6rem;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.font-dropdown:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.font-dropdown option {
+  padding: 12px;
+  font-size: 1.4rem;
+}
+
+.font-preview {
+  padding: 30px;
+  font-size: 2rem;
+  text-align: center;
+  border-radius: 10px;
+  background-color: rgba(255, 255, 255, 0.3);
+  min-height: 100px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+@media (max-width: 600px) {
+  .settings-container {
+    padding: 20px;
+  }
+
+  .settings-page h1 {
+    font-size: 2.5rem;
+  }
+
+  .settings-section h2 {
+    font-size: 1.8rem;
+  }
+
+  .theme-option-button {
+    font-size: 1.4rem;
+  }
+}

@@ -1,0 +1,360 @@
+.calendar-container {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 10px;
+  border-radius: 16px;
+  position: relative;
+}
+
+.calendar-container.month > * {
+  animation: zoomInFromOrigin 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  transform-origin: var(--zoom-x, 50%) var(--zoom-y, 50%);
+}
+
+.calendar-container.year {
+  animation: zoomOutToGrid 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+@keyframes zoomInFromOrigin {
+  0% {
+    opacity: 0.5;
+    transform: scale(0.2);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes zoomOutToGrid {
+  0% {
+    opacity: 0.5;
+    transform: scale(1.5);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.calendar-header,
+.year-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 15px;
+}
+
+.calendar-header h2,
+.year-header h2 {
+  font-size: 1.8rem;
+}
+
+.nav-button {
+  padding: 6px 16px;
+  font-size: 1.3rem;
+  font-family: inherit;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+}
+
+.nav-button:hover {
+  transform: scale(1.05);
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.15);
+}
+
+.calendar-weekdays {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 6px;
+  margin-bottom: 6px;
+}
+
+.weekday {
+  text-align: center;
+  font-size: 1.2rem;
+  font-weight: bold;
+  padding: 5px;
+}
+
+/* Month View */
+.calendar-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 6px;
+}
+
+.calendar-day {
+  aspect-ratio: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.4rem;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+  user-select: none;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  will-change: transform;
+}
+
+.calendar-day:not(.empty):hover {
+  transform: scale(1.08);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.calendar-day.empty {
+  cursor: default;
+}
+
+.calendar-day.exercised {
+  font-weight: bold;
+  box-shadow: 0 2px 8px rgba(76, 175, 80, 0.4);
+}
+
+.calendar-day.today {
+  font-weight: bold;
+  animation: pulse-today 2s ease-in-out infinite;
+  position: relative;
+}
+
+.calendar-day.has-note {
+  position: relative;
+}
+
+.note-indicator {
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  font-size: 0.7rem;
+  line-height: 1;
+  opacity: 0.8;
+  pointer-events: none;
+}
+
+.calendar-day.today::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 100%;
+  height: 100%;
+  border-radius: 8px;
+  transform: translate(-50%, -50%);
+  animation: pulse-ring 2s ease-in-out infinite;
+  pointer-events: none;
+}
+
+@keyframes pulse-today {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.05);
+  }
+}
+
+@keyframes pulse-ring {
+  0% {
+    box-shadow: 0 0 0 0 var(--accent-color, #007bff);
+    opacity: 0.7;
+  }
+  50% {
+    box-shadow: 0 0 0 8px var(--accent-color, #007bff);
+    opacity: 0;
+  }
+  100% {
+    box-shadow: 0 0 0 0 var(--accent-color, #007bff);
+    opacity: 0;
+  }
+}
+
+/* Year View */
+.year-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+}
+
+.mini-month {
+  padding: 10px;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  cursor: pointer;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  transform-origin: center;
+  will-change: transform, opacity;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.mini-month:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+}
+
+.mini-month-header {
+  text-align: center;
+  font-size: 1.3rem;
+  font-weight: bold;
+  margin-bottom: 8px;
+}
+
+.mini-month-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 2px;
+}
+
+.mini-day {
+  aspect-ratio: 1;
+  border-radius: 3px;
+  pointer-events: none;
+}
+
+.mini-day.exercised {
+  box-shadow: 0 1px 3px rgba(76, 175, 80, 0.4);
+}
+
+/* Animations */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes scaleIn {
+  from {
+    opacity: 0;
+    transform: scale(0.8);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .year-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .calendar-day {
+    font-size: 1.4rem;
+  }
+
+  .calendar-header h2,
+  .year-header h2 {
+    font-size: 2rem;
+  }
+}
+
+/* Note Modal */
+.note-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  animation: fadeIn 0.2s ease;
+}
+
+.note-modal {
+  padding: 24px;
+  border-radius: 16px;
+  min-width: 300px;
+  max-width: 500px;
+  width: 90%;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+  animation: scaleIn 0.2s ease-out;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.note-modal h3 {
+  margin: 0 0 8px 0;
+  font-size: 1.5rem;
+}
+
+.note-modal p {
+  margin: 0 0 16px 0;
+}
+
+.note-textarea {
+  width: 100%;
+  min-height: 120px;
+  padding: 12px;
+  font-size: 1.1rem;
+  font-family: inherit;
+  border-radius: 8px;
+  resize: vertical;
+  margin-bottom: 16px;
+  box-sizing: border-box;
+}
+
+.note-textarea:focus {
+  outline: none;
+  border-width: 2px;
+}
+
+.note-modal-buttons {
+  display: flex;
+  gap: 12px;
+  justify-content: flex-end;
+}
+
+.note-button {
+  padding: 8px 20px;
+  font-size: 1.1rem;
+  font-family: inherit;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  border: none;
+}
+
+.note-button:hover {
+  opacity: 0.8;
+  transform: translateY(-2px);
+}
+
+.note-button.save {
+  font-weight: bold;
+}
+
+@media (max-width: 768px) {
+  .year-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .calendar-day {
+    font-size: 1.4rem;
+  }
+
+  .calendar-header h2,
+  .year-header h2 {
+    font-size: 2rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .year-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .note-modal {
+    min-width: 280px;
+  }
+}

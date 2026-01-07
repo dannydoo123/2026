@@ -1,0 +1,16 @@
+.page {
+  padding: 20px;
+}
+
+.page h1 {
+  font-size: 3rem;
+  margin-bottom: 30px;
+  text-align: center;
+}
+
+.empty-state {
+  text-align: center;
+  font-size: 2rem;
+  margin-top: 100px;
+  opacity: 0.6;
+}
