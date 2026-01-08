@@ -510,9 +510,23 @@
   .summary-card {
     grid-template-columns: repeat(2, 1fr);
   }
+
+  /* Year view: 3 columns on tablet */
+  .dopamine-year-grid,
+  .dopamine-year-grid-zoom {
+    grid-template-columns: repeat(3, 1fr);
+  }
 }
 
 @media (max-width: 768px) {
+  .dopamine-page {
+    padding: 12px;
+  }
+
+  .dopamine-page h1 {
+    font-size: 2rem;
+  }
+
   .modal {
     min-width: 300px;
     padding: 20px;
@@ -554,5 +568,76 @@
 
   .summary-card {
     grid-template-columns: 1fr;
+  }
+
+  /* Year view: 2 columns on mobile */
+  .dopamine-year-grid,
+  .dopamine-year-grid-zoom {
+    grid-template-columns: repeat(2, 1fr);
+    column-gap: 20px;
+    row-gap: 20px;
+    padding: 0 10px;
+  }
+
+  .dopamine-calendar-wrapper-zoom {
+    min-height: 400px;
+  }
+
+  .dopamine-month-card {
+    min-height: 180px;
+    padding: 10px;
+  }
+
+  .dopamine-month-header {
+    font-size: 1.1rem;
+  }
+
+  .month-nav h2 {
+    font-size: 1.4rem;
+  }
+
+  .month-nav button {
+    padding: 8px 16px;
+    font-size: 1rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .dopamine-page {
+    padding: 8px;
+  }
+
+  .dopamine-page h1 {
+    font-size: 1.8rem;
+    margin-bottom: 20px;
+  }
+
+  /* Year view: 1 column on small mobile */
+  .dopamine-year-grid,
+  .dopamine-year-grid-zoom {
+    grid-template-columns: 1fr;
+    gap: 15px;
+  }
+
+  .dopamine-month-card {
+    min-height: 200px;
+  }
+
+  .summary-card {
+    padding: 20px;
+    gap: 16px;
+  }
+
+  .trend-section {
+    padding: 20px;
+  }
+
+  .dopamine-calendar-day {
+    padding: 4px;
+  }
+
+  .weekday-header {
+    font-size: 0.75rem;
+    padding: 4px 0;
   }
 }

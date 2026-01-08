@@ -296,17 +296,37 @@
 }
 
 /* Responsive Design */
+@media (max-width: 1024px) {
+  .dashboard-grid {
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  }
+}
+
 @media (max-width: 768px) {
+  .home-page {
+    padding: 12px;
+  }
+
   .dashboard-grid {
     grid-template-columns: 1fr;
+    gap: 16px;
   }
 
   .home-page h1 {
     font-size: 2rem;
+    margin-bottom: 16px;
+  }
+
+  .motivation-section {
+    padding: 20px;
   }
 
   .motivation-quote {
     font-size: 1.2rem;
+  }
+
+  .dashboard-card {
+    padding: 20px;
   }
 
   .card-title {
@@ -324,5 +344,81 @@
 
   .progress-text {
     font-size: 1.5rem;
+  }
+
+  .focus-section {
+    padding: 20px;
+  }
+
+  .focus-section h2 {
+    font-size: 1.5rem;
+  }
+
+  .overall-stats {
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 12px;
+  }
+
+  .stat-number {
+    font-size: 2rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .home-page {
+    padding: 8px;
+  }
+
+  .home-page h1 {
+    font-size: 1.8rem;
+  }
+
+  .motivation-section {
+    padding: 16px;
+    margin-bottom: 20px;
+  }
+
+  .motivation-quote {
+    font-size: 1.1rem;
+  }
+
+  .motivation-author {
+    font-size: 0.9rem;
+  }
+
+  .dashboard-card {
+    padding: 16px;
+  }
+
+  .card-title {
+    font-size: 1.2rem;
+  }
+
+  .card-emoji {
+    font-size: 1.5rem;
+  }
+
+  .metric-label {
+    font-size: 0.9rem;
+  }
+
+  .metric-value {
+    font-size: 1.1rem;
+  }
+
+  .focus-section {
+    padding: 16px;
+  }
+
+  .focus-section h2 {
+    font-size: 1.3rem;
+  }
+
+  .focus-item {
+    padding: 12px;
+  }
+
+  .focus-text {
+    font-size: 1rem;
   }
 }

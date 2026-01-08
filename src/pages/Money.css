@@ -646,9 +646,23 @@
     border-bottom: 2px solid rgba(128, 128, 128, 0.2);
     padding: 16px 0;
   }
+
+  /* Year view: 3 columns on tablet */
+  .money-year-grid,
+  .money-year-grid-zoom {
+    grid-template-columns: repeat(3, 1fr);
+  }
 }
 
 @media (max-width: 768px) {
+  .money-page {
+    padding: 12px;
+  }
+
+  .money-page h1 {
+    font-size: 2rem;
+  }
+
   .transaction-modal {
     min-width: 300px;
     padding: 20px;
@@ -673,5 +687,77 @@
 
   .day-total {
     font-size: 0.65rem;
+  }
+
+  /* Year view: 2 columns on mobile */
+  .money-year-grid,
+  .money-year-grid-zoom {
+    grid-template-columns: repeat(2, 1fr);
+    column-gap: 20px;
+    row-gap: 20px;
+    padding: 0 10px;
+  }
+
+  .money-calendar-wrapper-zoom {
+    min-height: 400px;
+  }
+
+  .money-month-card {
+    min-height: 180px;
+    padding: 10px;
+  }
+
+  .money-month-header {
+    font-size: 1.1rem;
+  }
+
+  .month-nav h2 {
+    font-size: 1.4rem;
+  }
+
+  .month-nav button {
+    padding: 8px 16px;
+    font-size: 1rem;
+  }
+
+  .transaction-list {
+    max-height: 400px;
+  }
+}
+
+@media (max-width: 480px) {
+  .money-page {
+    padding: 8px;
+  }
+
+  .money-page h1 {
+    font-size: 1.8rem;
+    margin-bottom: 20px;
+  }
+
+  /* Year view: 1 column on small mobile */
+  .money-year-grid,
+  .money-year-grid-zoom {
+    grid-template-columns: 1fr;
+    gap: 15px;
+  }
+
+  .money-month-card {
+    min-height: 200px;
+  }
+
+  .summary-card {
+    padding: 20px;
+    gap: 12px;
+  }
+
+  .weekday-header {
+    font-size: 0.75rem;
+    padding: 4px 0;
+  }
+
+  .add-button {
+    font-size: 1rem;
+    padding: 10px 20px;
   }
 }

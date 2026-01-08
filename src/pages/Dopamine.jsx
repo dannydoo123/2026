@@ -10,7 +10,7 @@ import {
   upsertDopamineEntry,
   deleteDopamineEntry
 } from '../lib/database'
-import { formatLocalDate } from '../utils/dateHelpers'
+import { formatLocalDate, getTodayLocal, parseLocalDate, isToday as isTodayHelper } from '../utils/dateHelpers'
 import './Dopamine.css'
 
 function Dopamine() {
@@ -20,7 +20,7 @@ function Dopamine() {
   const [loading, setLoading] = useState(true)
   const [activeCategory, setActiveCategory] = useState(null)
   const [currentDate, setCurrentDate] = useState(new Date())
-  const [todayDate, setTodayDate] = useState(new Date())
+  const [todayDate, setTodayDate] = useState(getTodayLocal())
   const [viewMode, setViewMode] = useState('month') // 'month' or 'year'
   const [showEntryModal, setShowEntryModal] = useState(false)
   const [showCategoryModal, setShowCategoryModal] = useState(false)
@@ -45,10 +45,10 @@ function Dopamine() {
   // Update today's date in real-time
   useEffect(() => {
     const updateToday = () => {
-      setTodayDate(new Date())
+      setTodayDate(getTodayLocal())
     }
 
-    // Calculate milliseconds until next midnight
+    // Calculate milliseconds until next midnight (local time)
     const now = new Date()
     const tomorrow = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1)
     const msUntilMidnight = tomorrow - now
@@ -459,7 +459,7 @@ function Dopamine() {
     const cat = categories[activeCategory]
     const monthEntries = Object.entries(cat.entries)
       .filter(([dateString]) => {
-        const date = new Date(dateString)
+        const date = parseLocalDate(dateString)
         return date.getFullYear() === year && date.getMonth() === month
       })
 
@@ -475,7 +475,7 @@ function Dopamine() {
     const cat = categories[activeCategory]
     const monthEntries = Object.entries(cat.entries)
       .filter(([dateString]) => {
-        const date = new Date(dateString)
+        const date = parseLocalDate(dateString)
         return date.getFullYear() === year && date.getMonth() === month
       })
 
@@ -494,7 +494,7 @@ function Dopamine() {
     const lastMonthDate = new Date(year, month - 1, 1)
     const lastMonthEntries = Object.entries(cat.entries)
       .filter(([dateString]) => {
-        const date = new Date(dateString)
+        const date = parseLocalDate(dateString)
         return date.getFullYear() === lastMonthDate.getFullYear() &&
                date.getMonth() === lastMonthDate.getMonth()
       })
@@ -570,7 +570,7 @@ function Dopamine() {
       const dateString = `${year}-${String(monthIndex + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`
       const intensity = getHeatMapIntensity(dateString)
       const value = cat.entries[dateString] || 0
-      const isToday = todayDate.toDateString() === new Date(dateString).toDateString()
+      const isToday = isTodayHelper(dateString)
       const hasEntry = value > 0
 
       days.push(
@@ -633,7 +633,7 @@ function Dopamine() {
       const intensity = getHeatMapIntensity(dateString)
       const onTrack = isOnTrack(dateString)
       const value = cat.entries[dateString] || 0
-      const isToday = todayDate.toDateString() === new Date(dateString).toDateString()
+      const isToday = isTodayHelper(dateString)
       const hasEntry = value > 0
 
       days.push(

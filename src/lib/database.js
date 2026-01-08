@@ -530,6 +530,109 @@ export async function toggleRoutineCompletion(routineId, date) {
 }
 
 // ============================================
+// TASK FUNCTIONS
+// ============================================
+
+export async function getTasks(date) {
+  const { data: { user } } = await supabase.auth.getUser()
+
+  const { data, error } = await supabase
+    .from('tasks')
+    .select('*')
+    .eq('user_id', user.id)
+    .eq('date', date)
+    .order('time', { ascending: true })
+
+  if (error) throw error
+  return data || []
+}
+
+export async function getTasksRange(startDate, endDate) {
+  const { data: { user } } = await supabase.auth.getUser()
+
+  const { data, error } = await supabase
+    .from('tasks')
+    .select('*')
+    .eq('user_id', user.id)
+    .gte('date', startDate)
+    .lte('date', endDate)
+    .order('date', { ascending: true })
+    .order('time', { ascending: true })
+
+  if (error) throw error
+  return data || []
+}
+
+export async function createTask(task) {
+  const { data: { user } } = await supabase.auth.getUser()
+
+  const { data, error } = await supabase
+    .from('tasks')
+    .insert([{
+      user_id: user.id,
+      date: task.date,
+      time: task.time,
+      title: task.title,
+      description: task.description || '',
+      completed: false
+    }])
+    .select()
+    .single()
+
+  if (error) throw error
+  return data
+}
+
+export async function updateTask(taskId, updates) {
+  const { data, error } = await supabase
+    .from('tasks')
+    .update({
+      date: updates.date,
+      time: updates.time,
+      title: updates.title,
+      description: updates.description,
+      completed: updates.completed
+    })
+    .eq('id', taskId)
+    .select()
+    .single()
+
+  if (error) throw error
+  return data
+}
+
+export async function deleteTask(taskId) {
+  const { error } = await supabase
+    .from('tasks')
+    .delete()
+    .eq('id', taskId)
+
+  if (error) throw error
+}
+
+export async function toggleTaskCompletion(taskId) {
+  // Get current task
+  const { data: task, error: fetchError } = await supabase
+    .from('tasks')
+    .select('completed')
+    .eq('id', taskId)
+    .single()
+
+  if (fetchError) throw fetchError
+
+  // Toggle completion
+  const { data, error } = await supabase
+    .from('tasks')
+    .update({ completed: !task.completed })
+    .eq('id', taskId)
+    .select()
+    .single()
+
+  if (error) throw error
+  return data
+}
+
+// ============================================
 // USER SETTINGS FUNCTIONS
 // ============================================
 
