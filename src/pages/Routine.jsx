@@ -647,8 +647,12 @@ function Routine() {
                 </div>
 
                 {/* Weekly Grid */}
+<<<<<<< HEAD
                 <div className="weekly-grid-container">
                   <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: '15px' }}>
+=======
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: '15px' }}>
+>>>>>>> 122061e1f1c6184c0017c2a94843dd1ffa54a6b6
                   {weekDays.map((date, dayIndex) => {
                     const dateString = formatLocalDate(date)
                     const dayTasks = tasks.filter(t => t.date === dateString)
@@ -769,7 +773,10 @@ function Routine() {
                       </div>
                     )
                   })}
+<<<<<<< HEAD
                   </div>
+=======
+>>>>>>> 122061e1f1c6184c0017c2a94843dd1ffa54a6b6
                 </div>
               </>
             )
