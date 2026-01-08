@@ -6,6 +6,8 @@ import Home from './pages/Home'
 import Money from './pages/Money'
 import Exercise from './pages/Exercise'
 import Dopamine from './pages/Dopamine'
+import Hobby from './pages/Hobby'
+import Routine from './pages/Routine'
 import Settings from './pages/Settings'
 import Login from './pages/Login'
 import AnimatedSprite from './components/AnimatedSprite'
@@ -121,6 +123,8 @@ function App() {
               <Route path="/money" element={<ProtectedRoute><Money /></ProtectedRoute>} />
               <Route path="/exercise" element={<ProtectedRoute><Exercise /></ProtectedRoute>} />
               <Route path="/dopamine" element={<ProtectedRoute><Dopamine /></ProtectedRoute>} />
+              <Route path="/hobby" element={<ProtectedRoute><Hobby /></ProtectedRoute>} />
+              <Route path="/routine" element={<ProtectedRoute><Routine /></ProtectedRoute>} />
               <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
             </Routes>
           </div>

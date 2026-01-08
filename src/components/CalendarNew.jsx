@@ -157,7 +157,7 @@ function Calendar({ currentDate, setCurrentDate, exerciseDays, toggleExerciseDay
   const getTransform = () => {
     if (viewMode === 'year') {
       // Year view - no transform
-      return { transform: 'scale(1) translate(0, 0)' }
+      return { transform: 'scale(1) translate(0, 0)', pointerEvents: 'auto' }
     }
 
     // Month view - zoom in on specific month
@@ -182,7 +182,8 @@ function Calendar({ currentDate, setCurrentDate, exerciseDays, toggleExerciseDay
     const translateY = (50 - monthCenterY * scale) / scale
 
     return {
-      transform: `scale(${scale}) translate(${translateX}%, ${translateY}%)`
+      transform: `scale(${scale}) translate(${translateX}%, ${translateY}%)`,
+      pointerEvents: 'none'
     }
   }
 

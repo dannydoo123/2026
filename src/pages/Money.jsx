@@ -10,6 +10,7 @@ import {
   createRecurringTransaction,
   deleteRecurringTransaction
 } from '../lib/database'
+import { formatLocalDate, parseLocalDate } from '../utils/dateHelpers'
 import './Money.css'
 
 function Money() {
@@ -171,7 +172,7 @@ function Money() {
 
   const getTransform = () => {
     if (viewMode === 'year') {
-      return { transform: 'scale(1) translate(0, 0)' }
+      return { transform: 'scale(1) translate(0, 0)', pointerEvents: 'auto' }
     }
 
     // Month view - zoom into specific month
@@ -186,7 +187,8 @@ function Money() {
     const translateY = (50 - monthCenterY * scale) / scale
 
     return {
-      transform: `scale(${scale}) translate(${translateX}%, ${translateY}%)`
+      transform: `scale(${scale}) translate(${translateX}%, ${translateY}%)`,
+      pointerEvents: 'none'
     }
   }
 
@@ -327,7 +329,7 @@ function Money() {
 
   const getMonthTransactions = () => {
     return transactions.filter(t => {
-      const date = new Date(t.date)
+      const date = parseLocalDate(t.date)
       return date.getFullYear() === year && date.getMonth() === month
     })
   }
@@ -625,7 +627,7 @@ function Money() {
       </div>
 
       {/* Main Content Area: Transaction List + Pie Chart */}
-      <div className="content-grid">
+      <div className="content-grid" style={{ marginTop: viewMode === 'month' ? '-200px' : '30px', transition: 'margin-top 0.35s cubic-bezier(0.4, 0, 0.2, 1)' }}>
         {/* Transaction List */}
         <div className="transaction-list-section">
           <div className="section-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -645,7 +647,7 @@ function Money() {
               </div>
             ) : (
               getMonthTransactions()
-                .sort((a, b) => new Date(b.date) - new Date(a.date))
+                .sort((a, b) => parseLocalDate(b.date) - parseLocalDate(a.date))
                 .map(transaction => (
                   <div
                     key={transaction.id}
@@ -659,7 +661,7 @@ function Money() {
                           {transaction.category}
                         </span>
                         <span className="transaction-date" style={{ color: theme.text, opacity: 0.6 }}>
-                          {new Date(transaction.date).toLocaleDateString('ko-KR')}
+                          {parseLocalDate(transaction.date).toLocaleDateString('ko-KR')}
                           {transaction.isRecurring && ' 🔁'}
                         </span>
                       </div>

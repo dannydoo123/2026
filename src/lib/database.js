@@ -298,6 +298,238 @@ export async function upsertExerciseNote(date, note) {
 }
 
 // ============================================
+// HOBBY FUNCTIONS
+// ============================================
+
+export async function getHobbyCategories() {
+  const { data, error } = await supabase
+    .from('hobby_categories')
+    .select('*')
+    .order('created_at', { ascending: true })
+
+  if (error) throw error
+  return data || []
+}
+
+export async function createHobbyCategory(category) {
+  const { data: { user } } = await supabase.auth.getUser()
+
+  const { data, error } = await supabase
+    .from('hobby_categories')
+    .insert([{
+      user_id: user.id,
+      name: category.name,
+      type: category.type,
+      unit: category.unit,
+      color: category.color,
+      goal_type: category.goalType,
+      goal_value: category.goalValue || 0
+    }])
+    .select()
+    .single()
+
+  if (error) throw error
+  return data
+}
+
+export async function updateHobbyCategory(id, updates) {
+  const { data, error } = await supabase
+    .from('hobby_categories')
+    .update({
+      name: updates.name,
+      type: updates.type,
+      unit: updates.unit,
+      color: updates.color,
+      goal_type: updates.goalType,
+      goal_value: updates.goalValue || 0
+    })
+    .eq('id', id)
+    .select()
+    .single()
+
+  if (error) throw error
+  return data
+}
+
+export async function deleteHobbyCategory(id) {
+  const { error } = await supabase
+    .from('hobby_categories')
+    .delete()
+    .eq('id', id)
+
+  if (error) throw error
+}
+
+export async function getHobbyEntries() {
+  const { data, error } = await supabase
+    .from('hobby_entries')
+    .select('*')
+    .order('date', { ascending: false })
+
+  if (error) throw error
+  return data || []
+}
+
+export async function upsertHobbyEntry(categoryId, date, value) {
+  const { data: { user } } = await supabase.auth.getUser()
+
+  const { data, error } = await supabase
+    .from('hobby_entries')
+    .upsert({
+      user_id: user.id,
+      category_id: categoryId,
+      date,
+      value
+    }, {
+      onConflict: 'user_id,category_id,date'
+    })
+    .select()
+    .single()
+
+  if (error) throw error
+  return data
+}
+
+export async function deleteHobbyEntry(categoryId, date) {
+  const { data: { user } } = await supabase.auth.getUser()
+
+  const { error } = await supabase
+    .from('hobby_entries')
+    .delete()
+    .eq('user_id', user.id)
+    .eq('category_id', categoryId)
+    .eq('date', date)
+
+  if (error) throw error
+}
+
+// ============================================
+// ROUTINE FUNCTIONS
+// ============================================
+
+export async function getRoutines() {
+  const { data, error } = await supabase
+    .from('routines')
+    .select('*')
+    .eq('is_active', true)
+    .order('time', { ascending: true })
+
+  if (error) throw error
+  return data || []
+}
+
+export async function createRoutine(routine) {
+  const { data: { user } } = await supabase.auth.getUser()
+
+  const { data, error } = await supabase
+    .from('routines')
+    .insert([{
+      user_id: user.id,
+      time: routine.time,
+      activity: routine.activity,
+      is_active: true
+    }])
+    .select()
+    .single()
+
+  if (error) throw error
+  return data
+}
+
+export async function updateRoutine(routineId, updates) {
+  const { data, error } = await supabase
+    .from('routines')
+    .update({
+      time: updates.time,
+      activity: updates.activity,
+      is_active: updates.isActive
+    })
+    .eq('id', routineId)
+    .select()
+    .single()
+
+  if (error) throw error
+  return data
+}
+
+export async function deleteRoutine(routineId) {
+  const { error } = await supabase
+    .from('routines')
+    .delete()
+    .eq('id', routineId)
+
+  if (error) throw error
+}
+
+export async function getRoutineCompletions(date) {
+  const { data: { user } } = await supabase.auth.getUser()
+
+  const { data, error } = await supabase
+    .from('routine_completions')
+    .select('*')
+    .eq('user_id', user.id)
+    .eq('date', date)
+
+  if (error) throw error
+  return data || []
+}
+
+export async function getRoutineCompletionsRange(startDate, endDate) {
+  const { data: { user } } = await supabase.auth.getUser()
+
+  const { data, error } = await supabase
+    .from('routine_completions')
+    .select('*')
+    .eq('user_id', user.id)
+    .gte('date', startDate)
+    .lte('date', endDate)
+
+  if (error) throw error
+  return data || []
+}
+
+export async function toggleRoutineCompletion(routineId, date) {
+  const { data: { user } } = await supabase.auth.getUser()
+
+  // Check if completion exists
+  const { data: existing, error: fetchError } = await supabase
+    .from('routine_completions')
+    .select('*')
+    .eq('user_id', user.id)
+    .eq('routine_id', routineId)
+    .eq('date', date)
+    .maybeSingle()
+
+  if (fetchError) throw fetchError
+
+  if (existing) {
+    // Delete if exists (toggle off)
+    const { error: deleteError } = await supabase
+      .from('routine_completions')
+      .delete()
+      .eq('id', existing.id)
+
+    if (deleteError) throw deleteError
+    return null
+  } else {
+    // Create if doesn't exist (toggle on)
+    const { data, error: insertError } = await supabase
+      .from('routine_completions')
+      .insert([{
+        user_id: user.id,
+        routine_id: routineId,
+        date,
+        completed: true
+      }])
+      .select()
+      .single()
+
+    if (insertError) throw insertError
+    return data
+  }
+}
+
+// ============================================
 // USER SETTINGS FUNCTIONS
 // ============================================
 

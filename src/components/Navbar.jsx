@@ -14,6 +14,8 @@ function Navbar() {
     { path: '/money', label: '돈' },
     { path: '/exercise', label: '운동' },
     { path: '/dopamine', label: '도파민' },
+    { path: '/hobby', label: '취미' },
+    { path: '/routine', label: '일과' },
     { path: '/settings', label: '설정' }
   ]
 

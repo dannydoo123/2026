@@ -195,13 +195,14 @@
 
 .calendar-day.has-note {
   position: relative;
+  size: 50%
 }
 
 .note-indicator {
   position: absolute;
   top: 2px;
   right: 2px;
-  font-size: 0.6rem;
+  font-size: 0.3rem;
   line-height: 1;
   opacity: 0.8;
   pointer-events: none;

@@ -2,18 +2,18 @@ import { useState, useEffect, useContext } from 'react'
 import { ThemeContext } from '../App'
 import { useAuth } from '../contexts/AuthContext'
 import {
-  getDopamineCategories,
-  createDopamineCategory,
-  updateDopamineCategory,
-  deleteDopamineCategory,
-  getDopamineEntries,
-  upsertDopamineEntry,
-  deleteDopamineEntry
+  getHobbyCategories,
+  createHobbyCategory,
+  updateHobbyCategory,
+  deleteHobbyCategory,
+  getHobbyEntries,
+  upsertHobbyEntry,
+  deleteHobbyEntry
 } from '../lib/database'
 import { formatLocalDate } from '../utils/dateHelpers'
 import './Dopamine.css'
 
-function Dopamine() {
+function Hobby() {
   const { theme } = useContext(ThemeContext)
   const { user } = useAuth()
   const [categories, setCategories] = useState({})
@@ -29,13 +29,12 @@ function Dopamine() {
   const [entryValue, setEntryValue] = useState('')
   const [durationHours, setDurationHours] = useState('')
   const [durationMinutes, setDurationMinutes] = useState('')
-  const [timeValue, setTimeValue] = useState('')
   const [categoryForm, setCategoryForm] = useState({
     name: '',
-    type: 'count',
-    unit: 'times',
-    color: '#FF6B6B',
-    goalType: 'none',
+    type: 'duration',
+    unit: 'minutes',
+    color: '#4ECDC4',
+    goalType: 'target',
     goalValue: ''
   })
 
@@ -71,12 +70,12 @@ function Dopamine() {
 
       try {
         setLoading(true)
-        const categoriesData = await getDopamineCategories()
+        const categoriesData = await getHobbyCategories()
 
         // Transform to match existing structure
         const categoriesObj = {}
         for (const cat of categoriesData) {
-          const entries = await getDopamineEntries(cat.id)
+          const entries = await getHobbyEntries(cat.id)
           const entriesObj = {}
           entries.forEach(entry => {
             entriesObj[entry.date] = entry.value
@@ -96,7 +95,7 @@ function Dopamine() {
         setCategories(categoriesObj)
         setLoading(false)
       } catch (error) {
-        console.error('Error loading dopamine data:', error)
+        console.error('Error loading hobby data:', error)
         setLoading(false)
       }
     }
@@ -167,10 +166,10 @@ function Dopamine() {
     setEditingCategory(null)
     setCategoryForm({
       name: '',
-      type: 'count',
-      unit: 'times',
-      color: '#FF6B6B',
-      goalType: 'none',
+      type: 'duration',
+      unit: 'minutes',
+      color: '#4ECDC4',
+      goalType: 'target',
       goalValue: ''
     })
     setShowCategoryModal(true)
@@ -201,8 +200,8 @@ function Dopamine() {
       return
     }
 
-    if (categoryForm.goalType === 'limit' && (!categoryForm.goalValue || parseFloat(categoryForm.goalValue) <= 0)) {
-      alert('Please enter a valid goal limit')
+    if (categoryForm.goalType === 'target' && (!categoryForm.goalValue || parseFloat(categoryForm.goalValue) <= 0)) {
+      alert('Please enter a valid goal target')
       return
     }
 
@@ -213,11 +212,11 @@ function Dopamine() {
         unit: categoryForm.unit,
         color: categoryForm.color,
         goalType: categoryForm.goalType,
-        goalValue: categoryForm.goalType === 'limit' ? parseFloat(categoryForm.goalValue) : 0
+        goalValue: categoryForm.goalType === 'target' ? parseFloat(categoryForm.goalValue) : 0
       }
 
       if (editingCategory) {
-        await updateDopamineCategory(editingCategory, categoryData)
+        await updateHobbyCategory(editingCategory, categoryData)
         setCategories(prev => ({
           ...prev,
           [editingCategory]: {
@@ -226,7 +225,7 @@ function Dopamine() {
           }
         }))
       } else {
-        const newCategory = await createDopamineCategory(categoryData)
+        const newCategory = await createHobbyCategory(categoryData)
         setCategories(prev => ({
           ...prev,
           [newCategory.id]: {
@@ -247,7 +246,7 @@ function Dopamine() {
   const deleteCategory = async (catId) => {
     if (window.confirm(`Delete category "${categories[catId].name}"?`)) {
       try {
-        await deleteDopamineCategory(catId)
+        await deleteHobbyCategory(catId)
         const newCategories = { ...categories }
         delete newCategories[catId]
         setCategories(newCategories)
@@ -274,15 +273,6 @@ function Dopamine() {
       const minutes = currentEntry % 60
       setDurationHours(hours.toString())
       setDurationMinutes(minutes.toString())
-    } else if (categories[activeCategory].type === 'time') {
-      // Convert stored minutes since midnight to HH:MM format
-      if (currentEntry > 0) {
-        const hours = Math.floor(currentEntry / 60)
-        const minutes = currentEntry % 60
-        setTimeValue(`${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`)
-      } else {
-        setTimeValue('')
-      }
     } else {
       setEntryValue(currentEntry.toString())
     }
@@ -295,7 +285,6 @@ function Dopamine() {
     setEntryValue('')
     setDurationHours('')
     setDurationMinutes('')
-    setTimeValue('')
   }
 
   const saveEntry = async () => {
@@ -308,18 +297,12 @@ function Dopamine() {
       const hours = parseInt(durationHours) || 0
       const minutes = parseInt(durationMinutes) || 0
       value = hours * 60 + minutes
-    } else if (cat.type === 'time') {
-      // Convert HH:MM to minutes since midnight
-      if (timeValue) {
-        const [hours, minutes] = timeValue.split(':').map(Number)
-        value = hours * 60 + minutes
-      }
     } else {
       value = parseFloat(entryValue) || 0
     }
 
     try {
-      await upsertDopamineEntry(activeCategory, selectedDate, value)
+      await upsertHobbyEntry(activeCategory, selectedDate, value)
       setCategories(prev => ({
         ...prev,
         [activeCategory]: {
@@ -341,7 +324,7 @@ function Dopamine() {
     if (!activeCategory) return
 
     try {
-      await deleteDopamineEntry(activeCategory, selectedDate)
+      await deleteHobbyEntry(activeCategory, selectedDate)
       const newEntries = { ...categories[activeCategory].entries }
       delete newEntries[selectedDate]
 
@@ -368,23 +351,7 @@ function Dopamine() {
 
     if (value === 0) return 0
 
-    if (cat.type === 'time') {
-      // For time tracking, later is better
-      // Use noon (720 minutes) as the baseline
-      // Earlier times have higher intensity (red), later times have lower intensity (green)
-      const noon = 720 // 12:00 PM in minutes
-      if (value <= noon) {
-        // Morning: map 0-720 to 1.0-0.3 intensity
-        return 1.0 - (value / noon) * 0.7
-      } else {
-        // Afternoon/Evening: map 720-1440 to 0.3-0.0 intensity
-        return Math.max(0, 0.3 - ((value - noon) / noon) * 0.3)
-      }
-    }
-
-    if (cat.goalType === 'abstinence') {
-      return value > 0 ? 1 : 0
-    } else if (cat.goalType === 'limit') {
+    if (cat.goalType === 'target') {
       const ratio = value / cat.goalValue
       return Math.min(ratio, 1)
     } else {
@@ -400,10 +367,8 @@ function Dopamine() {
     const cat = categories[activeCategory]
     const value = cat.entries[dateString] || 0
 
-    if (cat.goalType === 'abstinence') {
-      return value === 0
-    } else if (cat.goalType === 'limit') {
-      return value <= cat.goalValue
+    if (cat.goalType === 'target') {
+      return value >= cat.goalValue
     }
     return true
   }
@@ -412,7 +377,7 @@ function Dopamine() {
     if (!activeCategory) return 0
 
     const cat = categories[activeCategory]
-    if (cat.goalType !== 'abstinence') return null
+    if (cat.goalType !== 'target') return null
 
     let streak = 0
     const today = new Date()
@@ -422,7 +387,8 @@ function Dopamine() {
       date.setDate(date.getDate() - i)
       const dateString = formatLocalDate(date)
 
-      if (cat.entries[dateString] && cat.entries[dateString] > 0) {
+      const value = cat.entries[dateString] || 0
+      if (value < cat.goalValue) {
         break
       }
       streak++
@@ -506,19 +472,10 @@ function Dopamine() {
     const difference = currentMonthTotal - lastMonthTotal
     const percentage = ((difference / lastMonthTotal) * 100)
 
-    // For habits, lower is better (improvement = negative change)
-    // For abstinence/limit goals, reduction is good
-    const isImprovement = cat.goalType === 'none' ? false : difference < 0
+    // For hobbies, more is better (improvement = positive change)
+    const isImprovement = difference > 0
 
     return { difference, percentage, isImprovement }
-  }
-
-  const formatDuration = (value) => {
-    const hours = Math.floor(value / 60)
-    const minutes = value % 60
-    if (hours > 0 && minutes > 0) return `${hours}h ${minutes}m`
-    if (hours > 0) return `${hours}h`
-    return `${minutes}m`
   }
 
   const formatValue = (value) => {
@@ -534,16 +491,15 @@ function Dopamine() {
       return `${minutes}m`
     }
 
-    if (cat.type === 'time') {
-      if (value === 0) return 'Not set'
-      const hours = Math.floor(value / 60)
-      const minutes = value % 60
-      const period = hours >= 12 ? 'PM' : 'AM'
-      const displayHours = hours % 12 || 12
-      return `${displayHours}:${String(minutes).padStart(2, '0')} ${period}`
-    }
-
     return `${value.toFixed(1)} ${cat.unit}`
+  }
+
+  const formatDuration = (value) => {
+    const hours = Math.floor(value / 60)
+    const minutes = value % 60
+    if (hours > 0 && minutes > 0) return `${hours}h${minutes}m`
+    if (hours > 0) return `${hours}h`
+    return `${minutes}m`
   }
 
   const renderMonthGrid = (monthIndex) => {
@@ -584,7 +540,7 @@ function Dopamine() {
           style={{
             color: theme.text,
             backgroundColor: hasEntry
-              ? `rgba(255, 100, 100, ${intensity * 0.6})`
+              ? `${cat.color}${Math.round(intensity * 255).toString(16).padStart(2, '0')}`
               : 'transparent',
             cursor: canInteract ? 'pointer' : 'default'
           }}
@@ -592,9 +548,7 @@ function Dopamine() {
           <span className="day-number-small">{day}</span>
           {canInteract && hasEntry && (
             <span className="track-indicator" style={{ fontSize: '0.5rem', marginTop: '2px' }}>
-              {cat.type === 'duration' ? formatDuration(value) :
-               cat.type === 'time' ? formatValue(value).replace(' ', '') :
-               value}
+              {cat.type === 'duration' ? formatDuration(value) : value}
             </span>
           )}
         </div>
@@ -644,7 +598,7 @@ function Dopamine() {
           style={{
             color: theme.text,
             backgroundColor: hasEntry
-              ? `rgba(255, 100, 100, ${intensity * 0.6})`
+              ? `${cat.color}${Math.round(intensity * 255).toString(16).padStart(2, '0')}`
               : 'transparent'
           }}
         >
@@ -729,7 +683,7 @@ function Dopamine() {
 
     const maxValue = Math.max(
       ...days.map(d => d.value),
-      cat.goalType === 'limit' ? cat.goalValue : 0,
+      cat.goalType === 'target' ? cat.goalValue : 0,
       1
     )
 
@@ -751,7 +705,7 @@ function Dopamine() {
       .join(' ')
 
     // Goal line path
-    const goalY = cat.goalType === 'limit'
+    const goalY = cat.goalType === 'target'
       ? chartHeight - padding - (cat.goalValue / maxValue) * plotHeight
       : null
 
@@ -843,7 +797,7 @@ function Dopamine() {
 
   return (
     <div className="dopamine-page">
-      <h1 style={{ color: theme.text }}>도파민</h1>
+      <h1 style={{ color: theme.text }}>취미</h1>
 
       {/* Category Tabs */}
       <div className="category-tabs">
@@ -882,13 +836,13 @@ function Dopamine() {
 
       {!activeCategory ? (
         <div className="empty-state" style={{ color: theme.text }}>
-          Create a category to start tracking your habits
+          Create a category to start tracking your hobbies
         </div>
       ) : (
         <>
           {/* Summary Card */}
           <div className="summary-card" style={{ backgroundColor: theme.card }}>
-            {activeCat.goalType === 'abstinence' && (
+            {activeCat.goalType === 'target' && (
               <div className="summary-item">
                 <span style={{ color: theme.text, opacity: 0.8 }}>Current Streak</span>
                 <span className="streak-value" style={{ color: activeCat.color }}>
@@ -918,11 +872,11 @@ function Dopamine() {
                     fontWeight: 'bold'
                   }}
                 >
-                  {comparison.isImprovement ? '↓' : '↑'} {Math.abs(comparison.percentage).toFixed(1)}%
+                  {comparison.isImprovement ? '↑' : '↓'} {Math.abs(comparison.percentage).toFixed(1)}%
                 </span>
               </div>
             )}
-            {activeCat.goalType === 'limit' && (
+            {activeCat.goalType === 'target' && (
               <div className="summary-item">
                 <span style={{ color: theme.text, opacity: 0.8 }}>Daily Goal</span>
                 <span style={{ color: theme.accent, fontSize: '1.5rem', fontWeight: 'bold' }}>
@@ -986,7 +940,7 @@ function Dopamine() {
 
             <div className="modal-field">
               <label>
-                {activeCat.type === 'duration' ? 'Duration' : activeCat.type === 'time' ? 'Time' : 'Count'}
+                {activeCat.type === 'duration' ? 'Duration' : 'Count'}
               </label>
               {activeCat.type === 'duration' ? (
                 <div className="duration-inputs">
@@ -1009,13 +963,6 @@ function Dopamine() {
                     style={{ backgroundColor: theme.background, color: theme.text, border: `1px solid ${activeCat.color}` }}
                   />
                 </div>
-              ) : activeCat.type === 'time' ? (
-                <input
-                  type="time"
-                  value={timeValue}
-                  onChange={(e) => setTimeValue(e.target.value)}
-                  style={{ backgroundColor: theme.background, color: theme.text, border: `1px solid ${activeCat.color}`, width: '100%', padding: '8px' }}
-                />
               ) : (
                 <input
                   type="number"
@@ -1072,7 +1019,7 @@ function Dopamine() {
                 type="text"
                 value={categoryForm.name}
                 onChange={(e) => setCategoryForm({ ...categoryForm, name: e.target.value })}
-                placeholder="e.g., Vaping, Screen Time"
+                placeholder="e.g., Piano, Drawing, Reading"
                 style={{ backgroundColor: theme.background, color: theme.text, border: `1px solid ${theme.accent}` }}
               />
             </div>
@@ -1081,12 +1028,11 @@ function Dopamine() {
               <label>Tracking Type</label>
               <select
                 value={categoryForm.type}
-                onChange={(e) => setCategoryForm({ ...categoryForm, type: e.target.value, unit: e.target.value === 'duration' ? 'minutes' : e.target.value === 'time' ? 'time' : 'times' })}
+                onChange={(e) => setCategoryForm({ ...categoryForm, type: e.target.value, unit: e.target.value === 'duration' ? 'minutes' : 'times' })}
                 style={{ backgroundColor: theme.background, color: theme.text, border: `1px solid ${theme.accent}` }}
               >
-                <option value="count">Count (number of times)</option>
                 <option value="duration">Duration (time spent)</option>
-                <option value="time">First consumption (Time)</option>
+                <option value="count">Count (number of times)</option>
               </select>
             </div>
 
@@ -1097,18 +1043,9 @@ function Dopamine() {
                   type="text"
                   value={categoryForm.unit}
                   onChange={(e) => setCategoryForm({ ...categoryForm, unit: e.target.value })}
-                  placeholder="e.g., cigarettes, drinks, times"
+                  placeholder="e.g., pages, sessions, times"
                   style={{ backgroundColor: theme.background, color: theme.text, border: `1px solid ${theme.accent}` }}
                 />
-              </div>
-            )}
-
-            {categoryForm.type === 'time' && (
-              <div className="modal-field">
-                <label>Note</label>
-                <p style={{ fontSize: '0.9rem', opacity: 0.8, marginTop: '4px' }}>
-                  Track the time of first consumption. Later times mean better progress!
-                </p>
               </div>
             )}
 
@@ -1130,14 +1067,13 @@ function Dopamine() {
                 style={{ backgroundColor: theme.background, color: theme.text, border: `1px solid ${theme.accent}` }}
               >
                 <option value="none">None (just tracking)</option>
-                <option value="limit">Stay Under Limit</option>
-                <option value="abstinence">Abstinence (zero tolerance)</option>
+                <option value="target">Daily Target</option>
               </select>
             </div>
 
-            {categoryForm.goalType === 'limit' && (
+            {categoryForm.goalType === 'target' && (
               <div className="modal-field">
-                <label>Daily Limit</label>
+                <label>Daily Target</label>
                 <input
                   type="number"
                   min="0"
@@ -1182,4 +1118,4 @@ function Dopamine() {
   )
 }
 
-export default Dopamine
+export default Hobby
