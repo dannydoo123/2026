@@ -13,7 +13,7 @@ import {
   getRoutineCompletions,
   getUserSettings
 } from '../lib/database'
-import { formatLocalDate } from '../utils/dateHelpers'
+import { formatLocalDate, getTodayString, parseLocalDate } from '../utils/dateHelpers'
 import './Home.css'
 
 function Home() {
@@ -56,6 +56,10 @@ function Home() {
       try {
         setLoading(true)
 
+        // Calculate today once at the start
+        const today = new Date()
+        const todayString = formatLocalDate(today)
+
         // Load all data in parallel
         const [transactions, exerciseDays, dopamineCategories, hobbyCategories, routines, routineCompletions, settings] = await Promise.all([
           getTransactions(),
@@ -63,24 +67,23 @@ function Home() {
           getDopamineCategories(),
           getHobbyCategories(),
           getRoutines(),
-          getRoutineCompletions(formatLocalDate(today)),
+          getRoutineCompletions(todayString),
           getUserSettings()
         ])
 
         // Calculate Money Data
-        const today = new Date()
         const thisMonth = today.getMonth()
         const thisYear = today.getFullYear()
         const lastMonth = thisMonth === 0 ? 11 : thisMonth - 1
         const lastMonthYear = thisMonth === 0 ? thisYear - 1 : thisYear
 
         const thisMonthTransactions = transactions.filter(t => {
-          const date = new Date(t.date)
+          const date = parseLocalDate(t.date)
           return date.getMonth() === thisMonth && date.getFullYear() === thisYear
         })
 
         const lastMonthTransactions = transactions.filter(t => {
-          const date = new Date(t.date)
+          const date = parseLocalDate(t.date)
           return date.getMonth() === lastMonth && date.getFullYear() === lastMonthYear
         })
 
@@ -103,7 +106,7 @@ function Home() {
         // Calculate Exercise Data
         const exerciseGoal = settings?.exercise_monthly_goal || 20
         const thisMonthExercise = exerciseDays.filter(d => {
-          const date = new Date(d.date)
+          const date = parseLocalDate(d.date)
           return date.getMonth() === thisMonth && date.getFullYear() === thisYear && d.completed
         }).length
 

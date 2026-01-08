@@ -10,7 +10,7 @@ import {
   createRecurringTransaction,
   deleteRecurringTransaction
 } from '../lib/database'
-import { formatLocalDate, parseLocalDate } from '../utils/dateHelpers'
+import { formatLocalDate, parseLocalDate, getTodayLocal, isToday as isTodayHelper } from '../utils/dateHelpers'
 import './Money.css'
 
 function Money() {
@@ -20,7 +20,7 @@ function Money() {
   const [recurringTransactions, setRecurringTransactions] = useState([])
   const [loading, setLoading] = useState(true)
   const [currentDate, setCurrentDate] = useState(new Date())
-  const [todayDate, setTodayDate] = useState(new Date())
+  const [todayDate, setTodayDate] = useState(getTodayLocal())
   const [viewMode, setViewMode] = useState('month') // 'month' or 'year'
   const [showModal, setShowModal] = useState(false)
   const [editingTransaction, setEditingTransaction] = useState(null)
@@ -41,7 +41,7 @@ function Money() {
   // Update today's date in real-time
   useEffect(() => {
     const updateToday = () => {
-      setTodayDate(new Date())
+      setTodayDate(getTodayLocal())
     }
 
     // Calculate milliseconds until next midnight
@@ -389,7 +389,7 @@ function Money() {
       const dateString = `${year}-${String(monthIndex + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`
       const dayType = getDayType(dateString)
       const dayTotal = getDayTotal(dateString)
-      const isToday = todayDate.toDateString() === new Date(dateString).toDateString()
+      const isToday = isTodayHelper(dateString)
 
       days.push(
         <div
@@ -449,7 +449,7 @@ function Money() {
       const dateString = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`
       const dayType = getDayType(dateString)
       const dayTotal = getDayTotal(dateString)
-      const isToday = todayDate.toDateString() === new Date(dateString).toDateString()
+      const isToday = isTodayHelper(dateString)
 
       days.push(
         <div
