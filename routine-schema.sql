@@ -5,8 +5,8 @@ CREATE TABLE routines (
   time TIME NOT NULL, -- Time of day for this routine (e.g., 09:00:00)
   activity TEXT NOT NULL, -- Description of the activity (e.g., "Wake up", "Check work email")
   is_active BOOLEAN DEFAULT true, -- Whether this routine is currently active
-  created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL,
-  updated_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW() NOT NULL,
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW() NOT NULL
 );
 
 -- Routine completions table - tracks when routines are completed
@@ -16,7 +16,7 @@ CREATE TABLE routine_completions (
   routine_id UUID NOT NULL REFERENCES routines(id) ON DELETE CASCADE,
   date DATE NOT NULL, -- Date when the routine was completed
   completed BOOLEAN DEFAULT true,
-  completed_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL,
+  completed_at TIMESTAMP WITH TIME ZONE DEFAULT NOW() NOT NULL,
   UNIQUE(user_id, routine_id, date)
 );
 

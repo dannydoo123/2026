@@ -1,6 +1,6 @@
 -- Tasks table for single-day tasks with reminders
 CREATE TABLE IF NOT EXISTS tasks (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
   date DATE NOT NULL,
   time TIME NOT NULL,

@@ -1,3 +1,4 @@
+
 -- 2026 Goals Tracker Database Schema
 -- Run this SQL in your Supabase SQL Editor to create all necessary tables
 
@@ -36,7 +37,7 @@ CREATE TABLE IF NOT EXISTS dopamine_categories (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
   user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE NOT NULL,
   name TEXT NOT NULL,
-  type TEXT NOT NULL CHECK (type IN ('count', 'duration')),
+  type TEXT NOT NULL CHECK (type IN ('count', 'duration', 'time')),
   unit TEXT NOT NULL,
   color TEXT NOT NULL,
   goal_type TEXT NOT NULL CHECK (goal_type IN ('none', 'limit', 'abstinence')),
@@ -161,7 +162,7 @@ CREATE TABLE IF NOT EXISTS recurring_transactions (
   amount NUMERIC NOT NULL,
   currency TEXT NOT NULL DEFAULT 'USD',
   note TEXT,
-  recurring_day INTEGER NOT NULL,
+  recurring_day INTEGER NOT NULL CHECK (recurring_day BETWEEN 1 AND 31),
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
